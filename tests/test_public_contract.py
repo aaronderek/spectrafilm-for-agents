@@ -1,10 +1,11 @@
 """Contract tests for the public CLI. Synthetic data only.
 
 These tests do not render a camera file and do not measure speed.
-A full film render needs user-supplied spectral data that this tree does not ship.
+Default presets use the spectral table and filter curves shipped in the package.
 """
 from __future__ import annotations
 
+import io
 import os
 import struct
 import subprocess
@@ -48,30 +49,63 @@ class CliContract(unittest.TestCase):
         self.assertIn("default 95", text)
         self.assertIn("Does not cap file", text)
 
+    def test_no_sharpen_is_opt_in(self):
+        from types import SimpleNamespace
+        fields = dict(
+            film="kodak_portra_400", paper="kodak_portra_endura", scan_negative=False,
+            no_auto_exposure=False, metering="center_weighted", ev=0.0, format="35mm",
+            print_exposure=1.0, y_shift=0.0, m_shift=0.0, grain="off", halation="on",
+            halation_boost=None, _preset_boost=None, accurate=True,
+            grain_backend="parallel", seed=1, no_sharpen=False,
+        )
+        default, _, _ = film.build_params(SimpleNamespace(**fields), "sRGB")
+        fields["no_sharpen"] = True
+        explicit, _, _ = film.build_params(SimpleNamespace(**fields), "sRGB")
+        self.assertEqual(tuple(default.scanner.unsharp_mask), (0.7, 0.7))
+        self.assertEqual(tuple(explicit.scanner.unsharp_mask), (0.0, 0.0))
+
     def test_list_presets(self):
         result = _run(["--list"])
         self.assertEqual(result.returncode, 0, result.stderr)
         for token in ("portra400", "kodachrome", "vision3_500t", "kodak_2383", "kodak_kodachrome_64"):
             self.assertIn(token, result.stdout)
 
-    def test_render_without_spectral_table_fails_clearly(self):
+    def test_bundled_presets_render_without_external_dirs(self):
+        from PIL import Image, ImageCms
+        presets = (
+            ("portra400", "kodak_portra_endura", False),
+            ("kodachrome", "slide, direct scan", True),
+            ("vision3_500t", "kodak_2383", False),
+        )
         with tempfile.TemporaryDirectory() as tmp:
             source = Path(tmp) / "gradient.jpg"
-            image = np.zeros((8, 8, 3), np.uint8)
-            image[..., 0] = 180
-            image[..., 1] = 100
-            image[..., 2] = 60
-            from PIL import Image
-            Image.fromarray(image, mode="RGB").save(source)
-            result = _run([
-                str(source), "-p", "portra400", "-o", str(Path(tmp) / "out.jpg"),
-                "--accurate", "--no-sharpen", "--max-size", "8", "--quality", "92",
-            ])
-        self.assertNotEqual(result.returncode, 0)
-        combined = result.stderr + result.stdout
-        self.assertIn("SPEKTRAFILM_SPECTRAL_LUT_DIR", combined)
-        self.assertIn("LICENSING.md", combined)
-        self.assertNotIn("wrote ", combined)
+            height, width = 48, 64
+            x = np.linspace(40, 220, width, dtype=np.float32)
+            y = np.linspace(30, 180, height, dtype=np.float32)
+            rgb = np.empty((height, width, 3), np.float32)
+            rgb[..., 0] = x
+            rgb[..., 1] = y[:, None]
+            rgb[..., 2] = 80
+            Image.fromarray(rgb.astype(np.uint8), mode="RGB").save(source, quality=95)
+            common = [
+                "--accurate", "--no-sharpen", "--halation", "3", "--halation-boost", "2.5",
+                "--quality", "92", "--max-size", "32", "--seed", "7",
+            ]
+            for preset, marker, slide in presets:
+                output = Path(tmp) / f"{preset}.jpg"
+                result = _run([str(source), "-p", preset, "-o", str(output), *common])
+                self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+                self.assertIn("halation=3", result.stdout)
+                self.assertIn(marker, result.stdout)
+                if slide:
+                    self.assertIn("direct scan", result.stdout)
+                with Image.open(output) as image:
+                    icc = image.info.get("icc_profile")
+                    self.assertIsNotNone(icc)
+                    description = ImageCms.getProfileDescription(ImageCms.ImageCmsProfile(io.BytesIO(icc))) or ""
+                    self.assertIn("sRGB", description)
+                    self.assertEqual(list(image.getexif()), [])
+                    self.assertGreater(output.stat().st_size, 0)
 
 
 class DecodeContract(unittest.TestCase):
@@ -133,16 +167,19 @@ class AssetHooks(unittest.TestCase):
         self.assertTrue(np.isfinite(values).all())
         self.assertGreater(values.max(), 0)
 
-    def test_default_print_illuminant_requires_user_curve(self):
+    def test_default_print_illuminant_uses_bundled_curve(self):
+        from spektrafilm.model.color_filters import schott_kg3_heat_filter
         from spektrafilm.model.illuminants import standard_illuminant
-        with self.assertRaises(FileNotFoundError) as caught:
-            standard_illuminant("TH-KG3")
-        message = str(caught.exception)
-        self.assertIn("heat_absorbing/schott/KG3.csv", message)
-        self.assertIn("SPEKTRAFILM_FILTER_DIR", message)
+        os.environ.pop("SPEKTRAFILM_FILTER_DIR", None)
+        schott_kg3_heat_filter._transmittance = None
+        values = np.asarray(standard_illuminant("TH-KG3"), dtype=float)
+        self.assertTrue(np.isfinite(values).all())
+        self.assertGreater(values.max(), 0)
 
     def test_user_supplied_curve_is_what_th_kg3_applies(self):
+        from spektrafilm.model.color_filters import schott_kg3_heat_filter
         from spektrafilm.model.illuminants import standard_illuminant
+        schott_kg3_heat_filter._transmittance = None
         with tempfile.TemporaryDirectory() as tmp:
             curve = Path(tmp) / "heat_absorbing" / "schott"
             curve.mkdir(parents=True)

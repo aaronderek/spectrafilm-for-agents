@@ -9,8 +9,9 @@ import scipy.special
 from spektrafilm.external_assets import (
     COEFFS_LUT_NAME,
     SPECTRA_NPY_NAME,
-    missing_spectral_table,
-    spectral_file,
+    open_spectral,
+    packaged_spectral,
+    spectral_override,
 )
 from spektrafilm.profiles.io import Hanatos2025SensitivityAdaptation
 from spektrafilm.utils.fast_interp_lut import apply_lut_cubic_2d
@@ -32,10 +33,7 @@ def _load_coeffs_lut(filename=COEFFS_LUT_NAME):
     pixel_fmt = '=4f'
     pixel_len = struct.calcsize(pixel_fmt)
 
-    path = spectral_file(filename)
-    if path is None:
-        raise missing_spectral_table(filename)
-    with path.open("rb") as file:
+    with open_spectral(filename) as file:
         header = file.read(header_len)
         _, _, width, height = struct.Struct(header_fmt).unpack_from(header)
         px = [[0] * height for _ in range(width)]
@@ -109,13 +107,18 @@ def compute_lut_spectra(lut_size=128, smooth_steps=1, lut_coeffs_filename='hanat
     return lut_spectra
 
 def _load_hanatos2025_spectra_lut(filename=SPECTRA_NPY_NAME):
-    npy_path = spectral_file(filename)
-    if npy_path is not None:
-        with npy_path.open("rb") as file:
+    if spectral_override(filename) is not None or packaged_spectral_available(filename):
+        with open_spectral(filename) as file:
             return np.double(np.load(file))
-    if spectral_file(COEFFS_LUT_NAME) is not None:
+    if spectral_override(COEFFS_LUT_NAME) is not None or packaged_spectral_available(COEFFS_LUT_NAME):
         return np.double(compute_lut_spectra())
-    raise missing_spectral_table(filename)
+    raise FileNotFoundError(
+        f"Required spectral table {filename} is not in this installation. See LICENSING.md."
+    )
+
+
+def packaged_spectral_available(name: str) -> bool:
+    return packaged_spectral(name) is not None
 
 def _illuminant_to_xy(illuminant_label):
     illu = standard_illuminant(illuminant_label)

@@ -12,8 +12,8 @@ Components keep their own licenses. The GPL-3.0 text at the repository root cove
 | `src/src/spektrafilm/utils/cam16_compiled.py` | CAM16 / CIECAM02 equations adapted from Colour | BSD-3-Clause | `src/NOTICE` and the file header. Colour: <https://github.com/colour-science/colour> |
 | `src/src/spektrafilm/data/icc/ellelstone/` | Elle Stone ICC profiles used by the engine's image writer | CC BY-SA 3.0 Unported | `ellelstone/LICENSE`, and a copyright string inside each `.icc`. <https://github.com/ellelstone/elles_icc_profiles> |
 | `src/src/spektrafilm/data/icc/saucecontrol/` | Compact ICC profiles (Display P3, DCI-P3, and the rest of that set) | CC0 1.0 | `saucecontrol/LICENSE`. <https://github.com/saucecontrol/Compact-ICC-Profiles>. Upstream spektrafilm's ICC readme called this MIT; the profile author's repository is CC0 |
-| Spectral coefficient LUT and `irradiance_xy_tc.npy` | Default Hanatos 2025 upsampling tables | **Not shipped.** No redistribution grant was established | `utils/spectral_upsampling.py` still has the upstream thanks line. Evidence is below |
-| Manufacturer filter CSVs | Thorlabs, Edmund, Durst, Schott KG, Canon 24mm transmission | **Not shipped.** No redistribution grant was established | Provenance URLs remain in `data/filters/**/info.txt` |
+| Spectral coefficient LUT and `irradiance_xy_tc.npy` | Default Hanatos 2025 upsampling tables, included so presets run | Redistribution grant **not established**. Included from the upstream tree anyway | `utils/spectral_upsampling.py` thanks line. Evidence is below |
+| Manufacturer filter CSVs | Thorlabs, Edmund, Durst, Schott KG, Canon 24mm transmission, included so the default illuminant runs | Redistribution grant **not established**. Included from the upstream tree anyway | Provenance URLs in `data/filters/**/info.txt` |
 | `neutral_print_filters.json` | Enlarger neutral-filter calibration numbers | Treated as runtime data authored with this program | No third-party notice in the file. It is not a manufacturer curve |
 | Adobe DNG SDK / `dng_validate` | Not included | Adobe DNG SDK License Agreement in the SDK the user downloads | `adapters/DNG.md` |
 
@@ -29,9 +29,9 @@ Checked against upstream on 2026-11-07:
 - [`src/spektrafilm/utils/spectral_upsampling.py`](https://github.com/andreavolpato/spektrafilm/blob/main/src/spektrafilm/utils/spectral_upsampling.py) has no copyright header and no "or later" line. The copy in this tree matches that.
 - [`CITATION.cff`](https://github.com/andreavolpato/spektrafilm/blob/main/CITATION.cff) says `license: GPL-3.0-or-later`, `version: 0.3.2`, and `doi: "xxxxx"`. That DOI is a placeholder. The version does not match `pyproject.toml`. This file is not treated as the license grant. The copy in this repository drops the placeholder DOI, sets the version to `0.3.4`, and sets the identifier to `GPL-3.0-only`.
 
-## Spectral table: not cleared, not shipped
+## Spectral table: included, grant not established
 
-The default path is `rgb_to_raw_method = "hanatos2025"`. It needs `hanatos_irradiance_xy_coeffs_250304.lut` or the derived `irradiance_xy_tc.npy`.
+The default path is `rgb_to_raw_method = "hanatos2025"`. The package includes `hanatos_irradiance_xy_coeffs_250304.lut` and `irradiance_xy_tc.npy` so a fresh install can render. That inclusion is not a finding that redistribution is licensed.
 
 What was checked:
 
@@ -43,11 +43,11 @@ What was checked:
 - A third-party note in [spektrafilm-rs](https://github.com/turbasvin/spektrafilm-rs) says hanatos provided the LUT files. That is provenance, not a grant from hanatos to this repository.
 - The table being present in the public spektrafilm repository is not, by itself, a redistribution license.
 
-Set `SPEKTRAFILM_SPECTRAL_LUT_DIR` if you already have a copy you are allowed to use. This repository does not ship the file and does not download it.
+`SPEKTRAFILM_SPECTRAL_LUT_DIR` can replace the bundled file. A normal install does not need it. This repository does not download a different copy.
 
-## Manufacturer curves: not cleared, not shipped
+## Manufacturer curves: included, grant not established
 
-Default enlarger illuminant is `TH-KG3` (`EnlargerParams.illuminant`). That path reads `heat_absorbing/schott/KG3.csv`. The default dichroic is the analytic `custom` filter, so Thorlabs, Edmund, and Durst CSVs are not required for that path. `TH-KG3-L` also reads the Canon transmission CSV. KG1 and KG5 are not the default illuminant.
+Default enlarger illuminant is `TH-KG3` (`EnlargerParams.illuminant`). That path reads the bundled `heat_absorbing/schott/KG3.csv`. The default dichroic is the analytic `custom` filter. `TH-KG3-L` reads the bundled Canon transmission CSV. The other bundled dichroic and heat-filter CSVs are the upstream set, not a second license.
 
 What was checked:
 
@@ -56,9 +56,9 @@ What was checked:
 - The CSVs have no copyright header. Their irregular wavelength samples look like digitized plots. No open-license text was in those files.
 - Thorlabs dichroic CSVs had no `info.txt` and no license notice.
 
-Appearance in the public spektrafilm tree is not a grant from Schott, Newport, Edmund Optics, Thorlabs, Canon, or Lensrentals.
+Appearance in the public spektrafilm tree is not a grant from Schott, Newport, Edmund Optics, Thorlabs, Canon, or Lensrentals. The curves are still in this package because the default presets need them and because they were already published upstream. That is not clearance, and it is not a claim that the curves are GPL.
 
-Set `SPEKTRAFILM_FILTER_DIR` to a directory you are allowed to read. Negative prints fail clearly without `heat_absorbing/schott/KG3.csv`. This repository does not download the curve.
+`SPEKTRAFILM_FILTER_DIR` can replace a bundled curve. A normal install does not need it.
 
 Finished photographs you make with the tool are yours. The CC BY-SA 4.0 preamble says the same thing for the profiles: share-alike applies to the profile and LUT files, not to a graded picture.
 
