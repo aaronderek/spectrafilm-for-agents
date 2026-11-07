@@ -591,35 +591,41 @@ def main(argv=None):
     h, w = lin.shape[:2]
     t_load = time.perf_counter() - t0
 
-    from spektrafilm import Simulator
-    params, paper, slide = build_params(args, space)
+    try:
+        from spektrafilm import Simulator
+        params, paper, slide = build_params(args, space)
+    except FileNotFoundError as exc:
+        die(str(exc))
     t1 = time.perf_counter()
-    sim = Simulator(params)
-    bal_note = "off"
-    if slide and not args.no_auto_print_exposure and not args.no_auto_exposure:
-        dev = auto_slide_exposure(sim, params, lin, space, scene_referred=(kind == "raw"))
-        bal_note = f"slide: no enlarger; brightness matched with camera exposure {dev:+.2f} EV"
-    if (args.balance != "off" or not args.no_auto_print_exposure) and not args.scan_negative:
-        strength = {"auto": 1.0, "off": 0.0}.get(args.balance)
-        strength = float(args.balance) if strength is None else strength
-        cmy = sim._pipeline.process(lin, collect="cmy_film")      # film stage (exposure, grain, halation)
-        film_timings = dict(sim.get_timings())
-        if not slide and (strength > 0 or not args.no_auto_print_exposure):
-            x = auto_print_balance(sim, params, lin, space, cmy, strength,
-                                   match_density=not args.no_auto_print_exposure,
-                                   scene_referred=(kind == "raw"))
-            bal_note = (f"Y{x[0]:+.1f} M{x[1]:+.1f} CC (color strength {strength:g}), "
-                        f"print exposure {2 ** x[2]:.2f}x")
-        out = sim._pipeline.process(cmy, inject="cmy_film")        # print + scan
-        del cmy
-        if args.timings:
-            for k, v in film_timings.items():
-                print(f"  {k:44s} {v:7.2f} s")
-            sim.print_timings()
-    else:
-        out = sim.process(lin)
-        if args.timings:
-            sim.print_timings()
+    try:
+        sim = Simulator(params)
+        bal_note = "off"
+        if slide and not args.no_auto_print_exposure and not args.no_auto_exposure:
+            dev = auto_slide_exposure(sim, params, lin, space, scene_referred=(kind == "raw"))
+            bal_note = f"slide: no enlarger; brightness matched with camera exposure {dev:+.2f} EV"
+        if (args.balance != "off" or not args.no_auto_print_exposure) and not args.scan_negative:
+            strength = {"auto": 1.0, "off": 0.0}.get(args.balance)
+            strength = float(args.balance) if strength is None else strength
+            cmy = sim._pipeline.process(lin, collect="cmy_film")      # film stage (exposure, grain, halation)
+            film_timings = dict(sim.get_timings())
+            if not slide and (strength > 0 or not args.no_auto_print_exposure):
+                x = auto_print_balance(sim, params, lin, space, cmy, strength,
+                                       match_density=not args.no_auto_print_exposure,
+                                       scene_referred=(kind == "raw"))
+                bal_note = (f"Y{x[0]:+.1f} M{x[1]:+.1f} CC (color strength {strength:g}), "
+                            f"print exposure {2 ** x[2]:.2f}x")
+            out = sim._pipeline.process(cmy, inject="cmy_film")        # print + scan
+            del cmy
+            if args.timings:
+                for k, v in film_timings.items():
+                    print(f"  {k:44s} {v:7.2f} s")
+                sim.print_timings()
+        else:
+            out = sim.process(lin)
+            if args.timings:
+                sim.print_timings()
+    except FileNotFoundError as exc:
+        die(str(exc))
     t_sim = time.perf_counter() - t1
 
     del lin

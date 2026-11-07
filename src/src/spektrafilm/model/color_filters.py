@@ -27,11 +27,20 @@ class DichroicFilters():
     def __init__(self,
                  brand='thorlabs'):
         self.wavelengths = SPECTRAL_SHAPE.wavelengths
-        self.filters = np.zeros((np.size(self.wavelengths), 3))
+        self.brand = brand
+        self._filters = None
         if brand == 'custom':
             self.create_custom_filters()
-        else:
-            self.filters = load_dichroic_filters(self.wavelengths, brand)
+
+    @property
+    def filters(self):
+        if self._filters is None:
+            self._filters = load_dichroic_filters(self.wavelengths, self.brand)
+        return self._filters
+
+    @filters.setter
+    def filters(self, value):
+        self._filters = value
             
     def plot(self):
         colors = ['tab:cyan', 'tab:pink', 'gold']
@@ -72,10 +81,25 @@ class GenericFilter():
         self.wavelengths = SPECTRAL_SHAPE.wavelengths
         self.type = type
         self.brand = brand
-        self.transmittance = np.zeros_like(self.wavelengths)
-        if load_from_database:
-            self.transmittance = load_filter(self.wavelengths, name, brand, type,
-                                             percent_transmittance=data_in_percentage)
+        self.name = name
+        self._data_in_percentage = data_in_percentage
+        self._load_from_database = load_from_database
+        self._transmittance = None
+
+    @property
+    def transmittance(self):
+        if self._transmittance is None:
+            if self._load_from_database:
+                self._transmittance = load_filter(
+                    self.wavelengths, self.name, self.brand, self.type,
+                    percent_transmittance=self._data_in_percentage)
+            else:
+                self._transmittance = np.zeros_like(self.wavelengths)
+        return self._transmittance
+
+    @transmittance.setter
+    def transmittance(self, value):
+        self._transmittance = value
     
     def apply(self, illuminant, value=1.0):
         dimmed_filter = 1 - (1-self.transmittance)*value

@@ -1,6 +1,10 @@
 # Agents
 
-Spectrafilm for Agents is a headless CLI around the `spektrafilm` 0.3.4 runtime. Use the commands below. Do not assume a GUI, a bundled `dng_validate`, or a 25 MB output cap.
+Spectrafilm for Agents is a headless CLI around the `spektrafilm` 0.3.4 runtime. Do not assume a GUI, a bundled `dng_validate`, or a 25 MB output cap.
+
+The spectral coefficient table and the filter curves used by the default presets are in the package. A fresh install can render without setting `SPEKTRAFILM_SPECTRAL_LUT_DIR` or `SPEKTRAFILM_FILTER_DIR`. Those variables replace the bundled files when you point them at a directory. The Hanatos table and the manufacturer curves do not have a separate redistribution grant on file. `LICENSING.md` records that. Do not describe the whole repository as one GPL tree.
+
+`--no-sharpen` is the explicit way to turn scanner sharpening off. The default remains sigma 0.7, amount 0.7. `--quality` defaults to 95.
 
 ## Setup
 

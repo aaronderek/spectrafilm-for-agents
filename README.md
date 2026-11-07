@@ -4,6 +4,10 @@
 
 每张图走一条虚拟链路：负片（或反转片）→ 放大机 / 相纸 → 扫描。数据是测量过的彩色胶片和相纸。这套数据里没有黑白胶片。
 
+安装完成后可以直接渲染。光谱系数表和默认印相要用的滤镜曲线已经放在包里，来自上游 spektrafilm 已公开的那一份。这两类文件**没有**单独核到可以再分发的许可证，不能写成「全部都是 GPL」。说明和出处在 [`LICENSING.md`](LICENSING.md)。`SPEKTRAFILM_SPECTRAL_LUT_DIR` 和 `SPEKTRAFILM_FILTER_DIR` 只在你想换掉自带文件时才需要设置。
+
+关闭扫描锐化必须写 `--no-sharpen`。不写的时候，扫描锐化仍是参数默认值 sigma `0.7`、amount `0.7`。`--quality` 默认 `95`，不是 92。这两种默认都不会把文件限制在 25MB 以内。
+
 ## 许可证
 
 代码是 **GPL-3.0-only**。胶片 / 相纸 JSON 是 **CC BY-SA 4.0**。ICC、光谱 LUT、滤镜曲线各自有来源，不能把整棵树标成同一种许可证。对照表、归属和未决项在 [`LICENSING.md`](LICENSING.md)。
@@ -122,7 +126,9 @@ inbox/  outbox/          空目录，不要提交照片
 
 ## English, for agents
 
-Read [`AGENTS.md`](AGENTS.md). Short form:
+Read [`AGENTS.md`](AGENTS.md). A normal install renders with the bundled spectral table and filter curves. Optional `SPEKTRAFILM_SPECTRAL_LUT_DIR` and `SPEKTRAFILM_FILTER_DIR` replace those files. They are not required. The redistribution license for the Hanatos table and the manufacturer curves is unresolved; see `LICENSING.md`. That is not a claim that the code, profiles, and those curves share one license.
+
+Short form:
 
 ```bash
 uv venv --python 3.13 .venv && uv pip install --python .venv/bin/python -e ./src

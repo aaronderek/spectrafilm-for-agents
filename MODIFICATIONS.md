@@ -20,5 +20,6 @@ Interface changes made so the public tree runs without a private machine layout:
 - Adapters do not embed a Kodak ICC profile. Stage-3 and SDK-render TIFFs carry ImageDescription `ProPhoto RGB`.
 - The non-portable SDK build script is not included. `adapters/DNG.md` points at Adobe's own download.
 - `benchmarks/compare_reference.py` does not name a private RAW file.
+- `SPEKTRAFILM_SPECTRAL_LUT_DIR` and `SPEKTRAFILM_FILTER_DIR` optionally replace the bundled spectral table and filter curves. The default presets use the bundled copies.
 
 Profile JSON files are redistributed with the upstream CC BY-SA 4.0 notice. This publication does not claim they were edited.

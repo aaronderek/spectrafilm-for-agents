@@ -32,6 +32,10 @@ Benchmark scripts no longer contain a dated private RAW filename. `benchmarks/co
 
 Output JPEGs from the CLI are new files with an sRGB ICC profile. The writer does not copy source EXIF.
 
+## Spectral table and filter curves
+
+Those files are part of the published tree again. They were already on `main`. The license notice in `LICENSING.md` is unchanged in substance: a separate redistribution grant was not found. No photograph, RAW file, Adobe SDK binary, or Kodak ICC profile is added with them.
+
 ## Still your responsibility
 
 Do not put pictures into `inbox/` or `outbox/` and commit them. Local benchmark JSON can contain absolute paths; those directories are gitignored, and a later `git add -f` would bypass that. This review did not examine machines other than the candidate tree.
