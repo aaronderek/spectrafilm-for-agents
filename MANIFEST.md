@@ -3,7 +3,7 @@
 Included:
 
 - `film.py`, `run.sh` — headless CLI
-- `src/` — spektrafilm 0.3.4 runtime, profiles, ICC profiles, filter curves, spectral LUT
+- `src/` — spektrafilm 0.3.4 runtime, profiles, ICC profiles, and author-written neutral-filter calibration. Spectral coefficient tables and manufacturer filter CSVs are not included
 - `LICENSE` (GPL-3.0-only for the code), `src/SPEKTRAFILM_LICENSE.txt` (CC BY-SA 4.0 for profiles and their direct derivatives), `src/NOTICE` (Colour BSD-3-Clause)
 - `LICENSING.md`, `MODIFICATIONS.md`, `PRIVACY.md`, `AGENTS.md`
 - `docs/PERFORMANCE.md` — historical 2026-11-02 measurements, raw logs omitted

@@ -32,6 +32,10 @@ Benchmark scripts no longer contain a dated private RAW filename. `benchmarks/co
 
 Output JPEGs from the CLI are new files with an sRGB ICC profile. The writer does not copy source EXIF.
 
+## Follow-up removal
+
+A later commit removes the Hanatos coefficient LUT, the derived `.npy`, and the manufacturer filter CSVs from the branch tip. That does not rewrite the earlier commit on this branch, which still contains those blobs. Purging them from history was not done.
+
 ## Still your responsibility
 
 Do not put pictures into `inbox/` or `outbox/` and commit them. Local benchmark JSON can contain absolute paths; those directories are gitignored, and a later `git add -f` would bypass that. This review did not examine machines other than the candidate tree.

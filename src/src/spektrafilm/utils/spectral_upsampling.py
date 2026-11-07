@@ -2,11 +2,16 @@ import numpy as np
 import struct
 import colour
 import scipy
-import importlib.resources
 from opt_einsum import contract
 import scipy.interpolate
 import scipy.special
 
+from spektrafilm.external_assets import (
+    COEFFS_LUT_NAME,
+    SPECTRA_NPY_NAME,
+    missing_spectral_table,
+    spectral_file,
+)
 from spektrafilm.profiles.io import Hanatos2025SensitivityAdaptation
 from spektrafilm.utils.fast_interp_lut import apply_lut_cubic_2d
 from spektrafilm.config import SPECTRAL_SHAPE, STANDARD_OBSERVER_CMFS
@@ -19,7 +24,7 @@ _HANATOS2025_MAX_CORRECTION_STOPS = 2.0  # matches max_correction_stops used dur
 # LUT generatation of irradiance spectra for any xy chromaticity
 # Thanks to hanatos for providing luts and sample code to develop this. I am grateful.
 
-def _load_coeffs_lut(filename='hanatos_irradiance_xy_coeffs_250304.lut'):
+def _load_coeffs_lut(filename=COEFFS_LUT_NAME):
     # load lut of coefficients for efficient computations of irradiance spectra
     # formatting
     header_fmt = '=4i'
@@ -27,9 +32,10 @@ def _load_coeffs_lut(filename='hanatos_irradiance_xy_coeffs_250304.lut'):
     pixel_fmt = '=4f'
     pixel_len = struct.calcsize(pixel_fmt)
 
-    package = importlib.resources.files('spektrafilm.data.luts.spectral_upsampling')
-    resource = package / filename
-    with resource.open("rb") as file:
+    path = spectral_file(filename)
+    if path is None:
+        raise missing_spectral_table(filename)
+    with path.open("rb") as file:
         header = file.read(header_len)
         _, _, width, height = struct.Struct(header_fmt).unpack_from(header)
         px = [[0] * height for _ in range(width)]
@@ -102,11 +108,14 @@ def compute_lut_spectra(lut_size=128, smooth_steps=1, lut_coeffs_filename='hanat
     lut_spectra = np.array(lut_spectra, dtype=np.half)
     return lut_spectra
 
-def _load_hanatos2025_spectra_lut(filename='irradiance_xy_tc.npy'):
-    data_path = importlib.resources.files('spektrafilm.data.luts.spectral_upsampling').joinpath(filename)
-    with data_path.open('rb') as file:
-        spectra_lut = np.double(np.load(file))
-    return spectra_lut
+def _load_hanatos2025_spectra_lut(filename=SPECTRA_NPY_NAME):
+    npy_path = spectral_file(filename)
+    if npy_path is not None:
+        with npy_path.open("rb") as file:
+            return np.double(np.load(file))
+    if spectral_file(COEFFS_LUT_NAME) is not None:
+        return np.double(compute_lut_spectra())
+    raise missing_spectral_table(filename)
 
 def _illuminant_to_xy(illuminant_label):
     illu = standard_illuminant(illuminant_label)
@@ -217,7 +226,7 @@ def eval_poly4_warp_log_exposure_surface(params, illuminant_xy) -> np.ndarray:
     # Warp xy coordinate with the mobius warp, which is a radial compression towards the illuminant chromaticity.
     # This is to better sample the spectra of chromaticities close to the illuminant
     # and stabilize the surface for large chromaticity shifts.
-    surface_size = HANATOS2025_SPECTRA_LUT.shape[0]
+    surface_size = hanatos2025_spectra_lut().shape[0]
     tc_base = np.linspace(0,1,surface_size)
     tc = np.stack(np.meshgrid(tc_base, tc_base, indexing='ij'), axis=-1)
     xy = _quad2tri(tc)
@@ -233,7 +242,7 @@ def eval_poly4_warp_log_exposure_surface(params, illuminant_xy) -> np.ndarray:
     return surface_log_exposure_correction
 
 def eval_poly4_log_exposure_surface(params, illuminant_xy) -> np.ndarray:
-    surface_size = HANATOS2025_SPECTRA_LUT.shape[0]
+    surface_size = hanatos2025_spectra_lut().shape[0]
     tc_base = np.linspace(0,1,surface_size)
     tc = np.stack(np.meshgrid(tc_base, tc_base, indexing='ij'), axis=-1)
     tc_center = _tri2quad(illuminant_xy)
@@ -330,8 +339,16 @@ def rgb_to_raw_mallett2019(RGB, sensitivity,
 ################################################################################
 # Using hanatos irradiance spectra generation
 
-HANATOS2025_SPECTRA_LUT = _load_hanatos2025_spectra_lut()
+_HANATOS2025_SPECTRA_LUT = None
 HANATOS2025_NO_ADAPTATION = Hanatos2025SensitivityAdaptation(apply_surface=False, apply_window=False)
+
+
+def hanatos2025_spectra_lut():
+    """Load the user-supplied Hanatos spectra table on first use."""
+    global _HANATOS2025_SPECTRA_LUT
+    if _HANATOS2025_SPECTRA_LUT is None:
+        _HANATOS2025_SPECTRA_LUT = _load_hanatos2025_spectra_lut()
+    return _HANATOS2025_SPECTRA_LUT
 
 def compute_hanatos2025_tc_lut(sensitivity, hanatos2025_adaptation, gamut_compress=None):
     """Compute the LUT of spectra for given sensitivities and hanatos2025 adaptation parameters.
@@ -351,7 +368,7 @@ def compute_hanatos2025_tc_lut(sensitivity, hanatos2025_adaptation, gamut_compre
         compression-agnostic.
     """
 
-    spectra_lut = HANATOS2025_SPECTRA_LUT
+    spectra_lut = hanatos2025_spectra_lut()
 
     if hanatos2025_adaptation.spectral_gaussian_blur > 0:
         spectra_lut = scipy.ndimage.gaussian_filter(spectra_lut,
@@ -419,8 +436,9 @@ def rgb_to_smooth_spectrum(rgb, color_space, apply_cctf_decoding, reference_illu
         apply_cctf_decoding=apply_cctf_decoding,
         reference_illuminant=reference_illuminant,
     )
-    v = np.linspace(0, 1, HANATOS2025_SPECTRA_LUT.shape[0])
-    spectrum_w = scipy.interpolate.RegularGridInterpolator((v,v), HANATOS2025_SPECTRA_LUT)(tc_w)
+    spectra = hanatos2025_spectra_lut()
+    v = np.linspace(0, 1, spectra.shape[0])
+    spectrum_w = scipy.interpolate.RegularGridInterpolator((v,v), spectra)(tc_w)
     spectrum_w *= b_w
     return spectrum_w.flatten()
 

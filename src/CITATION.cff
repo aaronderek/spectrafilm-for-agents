@@ -1,18 +1,20 @@
 cff-version: 1.2.0
 message: |
-   spektrafilm is open for research, integration, and production use.
+  Citation metadata for the spektrafilm 0.3.4 runtime packaged in this
+  repository, including local CPU and memory changes. Andrea Volpato is the
+  upstream author. This is not an official spektrafilm release and it has no
+  Zenodo DOI.
 
-  If you find it useful:
-  * Acknowledge spektrafilm in plugin descriptions, marketing, or credits
-    (e.g. "spectral film modeling powered by `spektrafilm`" or "spectral framework inspired by `spektrafilm`").
-  * Consider starring the repo or sharing your results.
-  * Cite the repository/Zenodo DOI in academic work.
+  Upstream CITATION.cff on main still says version 0.3.2, doi "xxxxx", and
+  license GPL-3.0-or-later. Those values are not repeated here. "xxxxx" is a
+  placeholder, not a DOI. The license identifier below follows the upstream
+  pyproject.toml field "GPLv3", the upstream README statement "GPLv3 licensed",
+  and GPL-3 section 14: the program texts that were compared do not say
+  "or any later version".
 
-  The project is GPLv3 licensed, so any derivative work must also be open source under the same license. Derivatve work includes any software, plugin, or tool that incorporates spektrafilm code or is directly inspired by its methods.
-  
-  If GPLv3 is not compatible with your project, please reach out to discuss alternative options. I am very open to collaboration and integration, but I want to ensure that spektrafilm remains open source and grows with the community. 
-
-  This helps sustain open color science. Thanks!
+  If you find spektrafilm useful, acknowledge it and cite
+  https://github.com/andreavolpato/spektrafilm once that project publishes a
+  real DOI.
 
 authors:
   - family-names: "Volpato"
@@ -22,44 +24,7 @@ authors:
     affiliation: "KTH Royal Institute of Technology, Sweden"
 
 title: "spektrafilm: spectral simulation of analog photography"
-version: "0.3.2"
-doi: "xxxxx"
-repository: "https://github.com/andreavolpato/spektrafilm"
-license: "GPL-3.0-or-later"
-
-preferred-citation:
-  type: "article"
-  title: "spektrafilm: a measurement-grounded, physically-based spectral framework for open film emulation"
-  authors:
-    - family-names: "Volpato"
-      given-names: "Andrea"
-  publisher: ""
-  doi: ""
-  year: "2026"
-
-references:
-  - type: "software"
-    title: "spektrafilm"
-    authors:
-      - family-names: "Volpato"
-        given-names: "Andrea"
-    repository: "https://github.com/andreavolpato/spektrafilm"
-    year: "2025"
-
-keywords:
-  - "film emulation"
-  - "spectral imaging"
-  - "color science"
-  - "chemical processing"
-  - "RA-4 print simulation"
-  - "cine print film"
-  - "Kodak"
-  - "Fujifilm"
-  - "open source"
-  - "halation"
-  - "dir couplers"
-
-abstract: |
-  spektrafilm simulates analog film from spectral capture through negative, print, and scan using manufacturer datasheets and physically based spectral modeling. It bridges open color science and production tools.
-
+version: "0.3.4"
+repository-code: "https://github.com/andreavolpato/spektrafilm"
+license: "GPL-3.0-only"
 url: "https://github.com/andreavolpato/spektrafilm"

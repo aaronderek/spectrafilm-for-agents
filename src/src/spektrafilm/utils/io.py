@@ -10,6 +10,8 @@ import numpy as np
 import OpenImageIO as oiio
 import scipy.interpolate
 
+from spektrafilm.external_assets import filter_override, missing_filter_curve
+
 ################################################################################
 # Image metadata
 ################################################################################
@@ -371,14 +373,26 @@ def read_neutral_print_filters():
 # Profiles
 ################################################################################
 
+def _open_filter_curve(relative: str):
+    override = filter_override(relative)
+    if override is not None:
+        return override.open("r")
+    package = pkg_resources.files("spektrafilm.data.filters")
+    resource = package.joinpath(*relative.split("/"))
+    try:
+        if resource.is_file():
+            return resource.open("r")
+    except (FileNotFoundError, OSError, TypeError):
+        pass
+    raise missing_filter_curve(relative)
+
+
 def load_dichroic_filters(wavelengths, brand='thorlabs'):
     channels = ['c','m','y']
     filters = np.zeros((np.size(wavelengths), 3))
     for i, channel in enumerate(channels):
-        package = pkg_resources.files('spektrafilm.data.filters.dichroics')
-        filename = brand+'/filter_'+channel+'.csv'
-        resource = package / filename
-        with resource.open("r") as file:
+        filename = f"dichroics/{brand}/filter_{channel}.csv"
+        with _open_filter_curve(filename) as file:
             data = np.loadtxt(file, delimiter=',')
             unique_index = np.unique(data[:,0], return_index=True)[1]
             data = data[unique_index,:]
@@ -388,12 +402,10 @@ def load_dichroic_filters(wavelengths, brand='thorlabs'):
 
 def load_filter(wavelengths, name='KG3', brand='schott', filter_type='heat_absorbing', percent_transmittance=False):
     transmittance = np.zeros_like(wavelengths)
-    package = pkg_resources.files('spektrafilm.data.filters.'+filter_type)
-    filename = brand+'/'+name+'.csv'
-    resource = package / filename
+    filename = f"{filter_type}/{brand}/{name}.csv"
     if percent_transmittance: scale = 100
     else: scale = 1
-    with resource.open("r") as file:
+    with _open_filter_curve(filename) as file:
         data = np.loadtxt(file, delimiter=',')
         unique_index = np.unique(data[:,0], return_index=True)[1]
         data = data[unique_index,:]

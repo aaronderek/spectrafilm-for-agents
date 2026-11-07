@@ -4,6 +4,10 @@
 
 每张图走一条虚拟链路：负片（或反转片）→ 放大机 / 相纸 → 扫描。数据是测量过的彩色胶片和相纸。这套数据里没有黑白胶片。
 
+**现在不能开箱出图。** 默认的 Hanatos 2025 光谱升采样表没有放进仓库：没有找到可以再分发那份表的许可证。负片印相的默认光源 `TH-KG3` 还要一份 Schott KG3 曲线，制造商曲线同样没有放进来。设置 `SPEKTRAFILM_SPECTRAL_LUT_DIR` 和 `SPEKTRAFILM_FILTER_DIR` 指向你有权使用的文件后，渲染才会继续。程序不会自己下载这些文件。缺文件时以非 0 退出，并写明环境变量和 `LICENSING.md`。反转片不走放大机，因此不一定要 KG3，但仍然要光谱表。证据和缺口见 [`LICENSING.md`](LICENSING.md)。
+
+关闭扫描锐化必须写 `--no-sharpen`。不写的时候，扫描锐化仍是参数默认值 sigma `0.7`、amount `0.7`。`--quality` 默认 `95`，不是 92。这两种默认都不会把文件限制在 25MB 以内。
+
 ## 许可证
 
 代码是 **GPL-3.0-only**。胶片 / 相纸 JSON 是 **CC BY-SA 4.0**。ICC、光谱 LUT、滤镜曲线各自有来源，不能把整棵树标成同一种许可证。对照表、归属和未决项在 [`LICENSING.md`](LICENSING.md)。
@@ -122,7 +126,9 @@ inbox/  outbox/          空目录，不要提交照片
 
 ## English, for agents
 
-Read [`AGENTS.md`](AGENTS.md). Short form:
+Read [`AGENTS.md`](AGENTS.md). Renders need `SPEKTRAFILM_SPECTRAL_LUT_DIR`. Negative prints also need `SPEKTRAFILM_FILTER_DIR` with `heat_absorbing/schott/KG3.csv`. Those files are not in this repository. `--help` and `--list` do not need them.
+
+Short form once you have supplied the tables:
 
 ```bash
 uv venv --python 3.13 .venv && uv pip install --python .venv/bin/python -e ./src

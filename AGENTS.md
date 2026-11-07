@@ -1,6 +1,17 @@
 # Agents
 
-Spectrafilm for Agents is a headless CLI around the `spektrafilm` 0.3.4 runtime. Use the commands below. Do not assume a GUI, a bundled `dng_validate`, or a 25 MB output cap.
+Spectrafilm for Agents is a headless CLI around the `spektrafilm` 0.3.4 runtime. Do not assume a GUI, a bundled `dng_validate`, a bundled spectral LUT, or a 25 MB output cap.
+
+## Not ready to render
+
+`./run.sh --help` and `./run.sh --list` work after install. A render does not, until you set:
+
+- `SPEKTRAFILM_SPECTRAL_LUT_DIR` — directory containing `hanatos_irradiance_xy_coeffs_250304.lut` and/or `irradiance_xy_tc.npy`
+- `SPEKTRAFILM_FILTER_DIR` — for negative prints, must contain `heat_absorbing/schott/KG3.csv` because the default enlarger illuminant is `TH-KG3`
+
+The process does not download either tree. Missing files exit non-zero and name `LICENSING.md`. Reversal presets still need the spectral table. They do not use the enlarger illuminant.
+
+`--no-sharpen` is the explicit way to turn scanner sharpening off. The default remains sigma 0.7, amount 0.7. `--quality` defaults to 95.
 
 ## Setup
 
