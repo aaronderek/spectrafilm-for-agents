@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spektrafilm"
+version = "0.3.4"
+description = "spektrafilm 0.3.4 runtime with local CPU and memory changes, packaged for a headless CLI. Not an official upstream release."
+readme = "README.md"
+requires-python = "~=3.13"
+license = { text = "GPL-3.0-only" }
+authors = [
+    { name = "Andrea Volpato", email = "volpedellenevi@gmail.com" },
+]
+dependencies = [
+    "numpy~=2.4",
+    "scipy~=1.17",
+    "colour-science~=0.4.6",
+    "scikit-image~=0.26",
+    "matplotlib~=3.10",
+    "opt-einsum~=3.4.0",
+    "numba~=0.64",
+    "OpenImageIO~=3.1.11",
+    "pyfftw~=0.15.0",
+    "rawpy~=0.26.1",
+    "exiv2~=0.18.1",
+    "lensfunpy~=1.18.0",
+    "Pillow~=12.1",
+    "tifffile>=2024.1",
+    "pillow-heif>=0.16",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[tool.setuptools]
+zip-safe = false
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["spektrafilm", "spektrafilm.*"]
+
+[tool.setuptools.package-data]
+spektrafilm = ["data/**/*"]
+
